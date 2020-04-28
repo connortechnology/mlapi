@@ -10,12 +10,13 @@ import requests
 import json
 import imutils
 import sys
+import time
 
 #--------- Change to your needs---------------
 BASE_API_URL='http://localhost:5000/api/v1' 
-USER='pp' 
-PASSWORD='abc123' 
-FRAME_SKIP = 5 
+USER='admin' 
+PASSWORD='XV35me' 
+FRAME_SKIP = 0
 
 # if you want face and gender
 #PARAMS = {'delete':'true', 'type':'face', 'gender':'true'}
@@ -26,6 +27,7 @@ PARAMS = {'delete':'true'}
 CAPTURE_SRC=0
 # you can also point it to any media URL, like an RTSP one or a file
 #CAPTURE_URL='rtsp://whatever'
+#CAPTURE_URL='/home/iconnor/Downloads/PlateRecognizer/Video_N1_Street_2lanes_Fast_2min.mp4'
 
 # If you want to use ZM
 # note your URL may need /cgi-bin/zm/nph-zms - make sure you specify it correctly
@@ -70,11 +72,13 @@ def draw_boxes(frame,data):
 
 video_source = cv2.VideoCapture(CAPTURE_SRC)
 frame_cnt = 0
+api_frame_count = 0
 
 if not video_source.isOpened():
     print("Could not open video_source")
     exit()
     
+last_tick = time.time()
 
 # read the video source, frame by frame and process it
 while video_source.isOpened():
@@ -86,11 +90,20 @@ while video_source.isOpened():
     # resize width down to 800px before analysis
     # don't need more
     frame = imutils.resize(frame,width=800)
-    frame_cnt+=1
-    if frame_cnt % FRAME_SKIP:
+    frame_cnt += 1
+    if FRAME_SKIP and frame_cnt % FRAME_SKIP:
       continue
 
     frame_cnt = 0
+
+    tick = time.time()
+    if not (tick - last_tick) > 10:
+        print('Analysing at {} fps'.format((api_frame_count/(tick-last_tick))))
+        last_tick = tick
+        api_frame_count = 0
+
+    api_frame_count += 1
+    
     # The API expects non-raw images, so lets convert to jpg
     ret, jpeg = cv2.imencode('.jpg', frame)
     # filename is important because the API checks filename type

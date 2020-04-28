@@ -52,7 +52,6 @@ def get_file(args):
     unique_filename = str(uuid.uuid4())
     file_with_path_no_ext = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     ext = None
-
    
     # uploaded as multipart data
     if args['file']:
@@ -92,10 +91,6 @@ def get_file(args):
     return file_with_path_no_ext, ext
 # general argument processing
 
-
-
-
-
 class Detect(Resource):
     @jwt_required
     def post(self):
@@ -126,7 +121,6 @@ class Detect(Resource):
         if args['delete']:
             os.remove(fi)
         return detections
-
 
 # generates a JWT token to use for auth
 class Login(Resource):
@@ -165,6 +159,10 @@ args, u = ap.parse_known_args()
 args = vars(args)
 utils.process_config(args)
 
+import modules.face_recognition as FaceRecog
+import modules.object as ObjectDetect
+
+
 app = Flask(__name__)
 
 def get_http_exception_handler(app):
@@ -196,15 +194,10 @@ api.add_resource(Detect, '/detect/object')
 api.add_resource(Health, '/health')
 utils.download_models()
 
-
-import modules.face_recognition as FaceRecog
-import modules.object as ObjectDetect
-
-face_obj = FaceRecog.Face()
-od_obj = ObjectDetect.Object()
-#q = deque()
-
-
+@app.before_first_request
+def function_to_run_only_once():
+    face_obj = FaceRecog.Face()
+    od_obj = ObjectDetect.Object()
 
 
 if __name__ == '__main__':
